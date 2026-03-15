@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic
+pydantic-settings
+ultralytics
+python-multipart
+shutil
+sqlalchemy
+sqlite3
