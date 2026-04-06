@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  yolo_system:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/static/uploads:/app/static/uploads
+      - ./backend/sql_app.db:/app/sql_app.db
+    restart: always

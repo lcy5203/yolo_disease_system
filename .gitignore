@@ -1,0 +1,22 @@
+﻿# Node.js
+**/node_modules/
+**/dist/
+**/build/
+.vscode/
+.idea/
+
+# Backend Build & Temp
+backend/dist/
+backend/build/
+backend/static/uploads/*
+!backend/static/uploads/.gitkeep
+
+# Models (建议仅保留最终版 best.pt)
+backend/models/active_model.json
+models/active_model.json
+
+# Logs & DB
+*.db
+*.log
+.env
+__pycache__/
