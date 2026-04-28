@@ -49,9 +49,9 @@ const handleEncyUpdate = () => { if (selectedEncy.value) emit('update-ency', sel
       <div class="glass-card control-card">
         <div class="card-header">
            <div class="icon">📚</div>
-           <h3>病害专家库动态维护</h3>
+           <h3>病害库动态维护</h3>
         </div>
-        <p class="desc">实时修改百科词条及防治专家建议（立即生效于全端）</p>
+        <p class="desc">实时修改百科词条及防治建议（立即生效于全端）</p>
 
         <div class="field-group">
            <label>选择待更新病害：</label>
@@ -64,7 +64,7 @@ const handleEncyUpdate = () => { if (selectedEncy.value) emit('update-ency', sel
            <label>修改防治建议 (HTML 支持):</label>
            <textarea v-model="selectedEncy.prevention" rows="6" class="premium-textarea"></textarea>
            <button class="btn-primary-admin secondary" @click="handleEncyUpdate">
-               同步专家建议到云端
+               同步建议到云端
            </button>
         </div>
         <div v-else class="empty-state">

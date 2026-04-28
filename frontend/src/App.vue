@@ -168,7 +168,7 @@ onMounted(() => {
   <div class="app-container" :class="{ 'light-mode': !isDarkMode }">
     <!-- 全局导航栏 -->
     <nav class="navbar glass-card">
-      <div class="logo">农医YOLO</div>
+      <div class="logo">基于YOLO模型的病害分类系统</div>
       <div class="nav-links">
         <a href="#" @click.prevent="switchView('detect')" :class="{ active: currentView === 'detect' }">病害检测</a>
         <a href="#" @click.prevent="switchView('history')" :class="{ active: currentView === 'history' }">检测流水</a>
