@@ -18,11 +18,11 @@ const historyRecords = ref([])
 const encyclopediaData = ref([])
 const statsData = ref(null)
 const searchKey = ref('')
-const useAttention = ref(false)
 
 // --- 用户认证与权限 ---
 const isLoggedIn = ref(false)
 const userRole = ref(localStorage.getItem('role') || 'user')
+const token = ref(localStorage.getItem('token') || '')
 const currentUser = ref(null)
 const showLoginDialog = ref(false)
 const loginForm = ref({ username: '', password: '', email: '' })
@@ -38,9 +38,10 @@ const toggleTheme = () => {
 // --- 路由切换逻辑 ---
 const switchView = (view) => {
   currentView.value = view
-  if (view === 'history') fetchHistory()
-  if (view === 'encyclopedia') fetchEncyclopedia()
-  if (view === 'stats') fetchStats()
+  if (view === 'stats') {
+    fetchStats();
+    fetchHistory(); 
+  }
   if (view === 'admin') fetchEncyclopedia()
 }
 
@@ -62,6 +63,8 @@ const handleAuth = async () => {
         } else {
             localStorage.setItem('token', data.access_token)
             localStorage.setItem('role', data.role)
+            localStorage.setItem('username', loginForm.value.username)
+            token.value = data.access_token
             isLoggedIn.value = true
             userRole.value = data.role
             currentUser.value = loginForm.value.username
@@ -76,26 +79,32 @@ const logout = () => {
   isLoggedIn.value = false
   userRole.value = 'user'
   currentUser.value = null
+  token.value = ''
 }
 
 const startDetection = async () => {
   if (!isLoggedIn.value) { showLoginDialog.value = true; return }
   isLoading.value = true
   const formData = new FormData()
-  // 关键修正：后端 detect.py 期待接收的是 'image' 字段
   formData.append('image', files.value[0])
-  formData.append('use_attention', useAttention.value ? 'true' : 'false')
+  // 注意：此处不再发送 use_attention 参数，后端将默认启用
 
   try {
-    const token = localStorage.getItem('token')
     const res = await fetch(`${API_BASE}/detect/`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
+      headers: { 'Authorization': `Bearer ${token.value}` },
       body: formData
     })
-    if (!res.ok) throw new Error('检测失败')
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      const detail = errData.detail || '未知服务器错误';
+      throw new Error(`检测失败 [状态码: ${res.status}]: ${JSON.stringify(detail)}`)
+    }
     detectionResult.value = await res.json()
-  } catch (e) { alert(e.message) }
+  } catch (e) { 
+    console.error('Detection Trace:', e);
+    alert(e.message); 
+  }
   finally { isLoading.value = false }
 }
 
@@ -106,13 +115,21 @@ const fetchHistory = async () => {
   historyRecords.value = data.records
 }
 
-const fetchEncyclopedia = async () => {
-  const res = await fetch(`${API_BASE}/encyclopedia/?search=${searchKey.value}`)
+const fetchEncyclopedia = async (query = '') => {
+  const search = typeof query === 'string' ? query : '';
+  const res = await fetch(`${API_BASE}/encyclopedia/?search=${search}`)
   encyclopediaData.value = await res.json()
 }
 
 const fetchStats = async () => {
-  const res = await fetch(`${API_BASE}/stats/`)
+  const token = localStorage.getItem('token')
+  const res = await fetch(`${API_BASE}/stats/`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+  if (!res.ok) {
+    console.error('获取统计数据失败')
+    return
+  }
   statsData.value = await res.json()
 }
 
@@ -122,7 +139,7 @@ const updateModel = async (config) => {
   const res = await fetch(`${API_BASE}/admin/model/switch`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-    body: JSON.stringify({ model_path: config.modelPath, is_attention: config.isAttention })
+    body: JSON.stringify({ model_path: config.modelPath })
   })
   const data = await res.json()
   alert(data.msg || data.detail)
@@ -160,6 +177,8 @@ onMounted(() => {
       isLoggedIn.value = true
       // 简单恢复角色显示，实际应用应从后端校验 token
       userRole.value = localStorage.getItem('role') || 'user'
+      currentUser.value = localStorage.getItem('username') || '管理员'
+      token.value = localStorage.getItem('token') || ''
   }
 })
 </script>
@@ -171,7 +190,6 @@ onMounted(() => {
       <div class="logo">基于YOLO模型的病害分类系统</div>
       <div class="nav-links">
         <a href="#" @click.prevent="switchView('detect')" :class="{ active: currentView === 'detect' }">病害检测</a>
-        <a href="#" @click.prevent="switchView('history')" :class="{ active: currentView === 'history' }">检测流水</a>
         <a href="#" @click.prevent="switchView('encyclopedia')" :class="{ active: currentView === 'encyclopedia' }">全科百科</a>
         <a href="#" @click.prevent="switchView('stats')" :class="{ active: currentView === 'stats' }">数据看板</a>
         <a v-if="userRole === 'admin'" href="#" @click.prevent="switchView('admin')" class="admin-link">⚙️ 管理中心</a>
@@ -201,7 +219,6 @@ onMounted(() => {
             :isLoading="isLoading" 
             :detectionResult="detectionResult" 
             :previewUrl="previewUrl"
-            v-model:useAttention="useAttention"
             @start-detection="startDetection" 
             @trigger-upload="triggerUpload"
             @handle-drop="handleDropUpload" />
@@ -212,9 +229,13 @@ onMounted(() => {
 
         <EncyclopediaView v-if="currentView === 'encyclopedia'" 
             :data="encyclopediaData" 
-            @fetch-ency="(key) => { searchKey=key; fetchEncyclopedia(); }" />
+            :isAdmin="userRole === 'admin'"
+            :token="token"
+            @fetch-ency="fetchEncyclopedia" />
 
-        <StatsView v-if="currentView === 'stats'" :statsData="statsData" />
+        <StatsView v-if="currentView === 'stats'" 
+            :statsData="statsData" 
+            :historyRecords="historyRecords" />
 
         <AdminView v-if="currentView === 'admin'" 
             :encyclopediaData="encyclopediaData" 

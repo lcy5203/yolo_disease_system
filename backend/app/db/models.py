@@ -18,7 +18,10 @@ class DetectionRecord(Base):
     original_image = Column(String)
     result_image = Column(String)
     disease_name = Column(String)
+    crop_type = Column(String) # 新增：作物类型 (Apple/Grape)
     confidence = Column(Float)
+    model_name = Column(String) # 新增：使用的模型 (YOLO11s/v8s/etc)
+    inference_time = Column(Float) # 新增：推理耗时 (ms)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 class DiseaseEncyclopedia(Base):

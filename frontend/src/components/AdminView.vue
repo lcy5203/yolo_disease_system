@@ -1,126 +1,86 @@
 <script setup>
-import { ref } from 'vue'
+import { reactive } from 'vue'
 
 const props = defineProps(['encyclopediaData'])
-const emit = defineEmits(['update-model', 'update-ency'])
+const emit = defineEmits(['update-model'])
 
-const adminConfig = ref({ modelPath: 'models/best.pt', isAttention: false })
-const selectedEncy = ref(null)
-
-const handleModelUpdate = () => { emit('update-model', adminConfig.value) }
-const handleEncyUpdate = () => { if (selectedEncy.value) emit('update-ency', selectedEncy.value) }
+const modelConfig = reactive({
+  modelPath: 'models/yolo11s_ema_mpdiou.pt'
+})
 </script>
 
 <template>
   <div class="view-container animate-fade-in">
-    <div class="admin-hero">
-      <h1 class="admin-title">⚙️ 平台系统管理中心</h1>
-      <div class="status-badge"><span class="dot"></span> 系统状态: 运行良好 (12400f + 4060 Ti)</div>
+    <div class="hero-header">
+       <h1 class="gradient-text">系统底层参数枢纽</h1>
+       <p class="subtitle-dim">管理员专属：调控核心推理引擎与性能配置</p>
     </div>
-    
-    <div class="admin-grid">
-      <!-- 1. 模型控制核心 -->
-      <div class="glass-card control-card">
-        <div class="card-header">
-           <div class="icon">💾</div>
-           <h3>模型动态权重切换</h3>
-        </div>
-        <p class="desc">更改后台推理引擎加载的 .pt 权重文件路径</p>
-        
-        <div class="field-group">
-           <label>本地权重路径 (Relative Path):</label>
-           <input type="text" v-model="adminConfig.modelPath" class="premium-input" placeholder="models/yolov11_attention.pt">
-        </div>
 
-        <div class="toggle-group">
-           <label class="check-container">
-             <input type="checkbox" v-model="adminConfig.isAttention">
-             <span class="checkmark"></span>
-             标记为全注意力增强版 (CBAM)
-           </label>
-        </div>
+    <div class="admin-grid-simple">
+       <!-- 核心权重配置 -->
+       <div class="glass-card config-section">
+          <div class="section-title">
+             <span class="icon">🧠</span>
+             <h2>核心推理权重 (Weights)</h2>
+          </div>
+          <p class="desc">指定系统启动时加载的 YOLO 权重文件路径。更新后将在下一次检测请求时生效。</p>
+          
+          <div class="input-group-admin">
+             <label>权重文件路径</label>
+             <input v-model="modelConfig.modelPath" type="text" placeholder="e.g. models/best.pt" />
+          </div>
+          
+          <button class="btn-apply" @click="emit('update-model', { ...modelConfig })">
+             应用新权重并重启引擎
+          </button>
+       </div>
 
-        <button class="btn-primary-admin" @click="handleModelUpdate">
-            更新全局推理配置
-        </button>
-      </div>
-      
-      <!-- 2. 百科防治专家系统 -->
-      <div class="glass-card control-card">
-        <div class="card-header">
-           <div class="icon">📚</div>
-           <h3>病害库动态维护</h3>
-        </div>
-        <p class="desc">实时修改百科词条及防治建议（立即生效于全端）</p>
-
-        <div class="field-group">
-           <label>选择待更新病害：</label>
-           <select v-model="selectedEncy" class="premium-select">
-             <option v-for="item in props.encyclopediaData" :key="item.id" :value="item">{{ item.name }}</option>
-           </select>
-        </div>
-
-        <div v-if="selectedEncy" class="editor-area animate-fade-in">
-           <label>修改防治建议 (HTML 支持):</label>
-           <textarea v-model="selectedEncy.prevention" rows="6" class="premium-textarea"></textarea>
-           <button class="btn-primary-admin secondary" @click="handleEncyUpdate">
-               同步建议到云端
-           </button>
-        </div>
-        <div v-else class="empty-state">
-           👈 请先选择一个病害词条开始编辑
-        </div>
-      </div>
+       <!-- 系统状态监控 (示例) -->
+       <div class="glass-card status-section">
+          <div class="section-title">
+             <span class="icon">📊</span>
+             <h2>系统服务状态</h2>
+          </div>
+          <div class="status-list">
+             <div class="status-item">
+                <span class="dot online"></span>
+                <span class="label">FastAPI 后端服务:</span>
+                <span class="val">运行中 (Active)</span>
+             </div>
+             <div class="status-item">
+                <span class="dot online"></span>
+                <span class="label">YOLO 推理集群:</span>
+                <span class="val">已就绪 (Ready)</span>
+             </div>
+             <div class="status-item">
+                <span class="dot warning"></span>
+                <span class="label">百科热更新模块:</span>
+                <span class="val">已迁移至百科页面</span>
+             </div>
+          </div>
+       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.admin-hero { margin-bottom: 3rem; }
-.admin-title { font-size: 2.5rem; margin-bottom: 0.8rem; font-weight: 800; color: #fbbf24; text-shadow: 0 0 15px rgba(251, 191, 36, 0.3); }
-.status-badge { display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.4rem 1rem; background: rgba(255,255,255,0.05); border-radius: 50px; font-size: 0.85rem; color: var(--text-dim); }
-.dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; animation: pulse 2s infinite; }
+.admin-grid-simple { display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; margin-top: 2rem; }
+.section-title { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+.section-title h2 { margin: 0; font-size: 1.4rem; color: var(--primary); }
+.desc { color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem; }
 
-.admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+.input-group-admin { margin-bottom: 1.5rem; }
+.input-group-admin label { display: block; color: #fff; font-size: 0.85rem; margin-bottom: 8px; font-weight: bold; }
+.input-group-admin input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; padding: 12px; color: #fff; outline: none; }
 
-.card-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
-.card-header .icon { font-size: 1.5rem; }
-.card-header h3 { margin: 0; font-size: 1.3rem; color: var(--text-main); }
+.btn-apply { width: 100%; padding: 12px; background: var(--primary); color: #022c22; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.3s; }
+.btn-apply:hover { filter: brightness(1.1); transform: translateY(-2px); }
 
-.desc { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; }
-
-.field-group { margin-bottom: 1.5rem; }
-.field-group label { display: block; margin-bottom: 0.8rem; font-size: 0.85rem; color: var(--text-dim); font-weight: 600; }
-
-.premium-input, .premium-select, .premium-textarea {
-  width: 100%; box-sizing: border-box; padding: 0.9rem; background: var(--bg); 
-  border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);
-  transition: 0.3s; font-family: inherit; font-size: 0.95rem;
-}
-
-.premium-input:focus, .premium-select:focus, .premium-textarea:focus { border-color: #fbbf24; outline: none; background: rgba(251, 191, 36, 0.05); }
-
-.premium-select { background: #1e293b; cursor: pointer; }
-
-.btn-primary-admin {
-  width: 100%; padding: 1rem; border-radius: 12px; border: none; font-size: 1rem; font-weight: 700;
-  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
-  color: #000; cursor: pointer; transition: 0.3s; margin-top: 1rem;
-}
-.btn-primary-admin:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(251, 191, 36, 0.4); }
-.btn-primary-admin.secondary { background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%); margin-top: 1.5rem; }
-
-.empty-state { text-align: center; padding: 3rem; color: var(--text-dim); font-style: italic; border: 2px dashed rgba(255,255,255,0.05); border-radius: 15px; }
-
-/* 自定义 Checkbox */
-.check-container { display: flex; align-items: center; cursor: pointer; font-size: 0.9rem; color: var(--text-dim); }
-.check-container input { display: none; }
-.checkmark { width: 18px; height: 18px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 4px; margin-right: 10px; position: relative; }
-.check-container input:checked ~ .checkmark { background: #fbbf24; border-color: #fbbf24; }
-.checkmark:after { content: "✓"; position: absolute; display: none; left: 4px; top: 0px; color: #000; font-weight: 900; font-size: 12px; }
-.check-container input:checked ~ .checkmark:after { display: block; }
-
-@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-
-@media (max-width: 1000px) { .admin-grid { grid-template-columns: 1fr; } }
+.status-list { display: flex; flex-direction: column; gap: 15px; }
+.status-item { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; }
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot.online { background: #4ade80; box-shadow: 0 0 10px #4ade80; }
+.dot.warning { background: #fbbf24; }
+.label { color: #94a3b8; }
+.val { color: #fff; font-weight: bold; }
 </style>
