@@ -1,7 +1,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+from app.core.paths import runtime_path
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./sql_app.db"
+DB_PATH = runtime_path("sql_app.db")
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH.as_posix()}"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}

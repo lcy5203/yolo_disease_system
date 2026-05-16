@@ -13,15 +13,15 @@ from app.db.session import get_db
 from app.db.models import DetectionRecord, User, DiseaseEncyclopedia
 from app.api.auth import get_current_user
 from app.core import security
+from app.core.paths import resource_path, runtime_path
 
 router = APIRouter()
 
 # Directories
-UPLOAD_DIR = "static/uploads"
+UPLOAD_DIR = runtime_path("static/uploads")
 
 def get_resource_path(relative_path):
-    base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    return os.path.join(base_path, relative_path)
+    return str(resource_path(relative_path))
 
 def get_active_model_path():
     """读取当前系统指定的唯一权重路径"""
@@ -59,17 +59,16 @@ def get_model():
             
     return models_cache[path]
 
-if not os.path.exists(UPLOAD_DIR):
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # 8 类病害的中英映射表 (精简匹配实际数据集)
 DISEASE_MAP = {
     "Apple___Apple_scab": "苹果黑星病",
     "Apple___Black_rot": "苹果黑腐病",
-    "Apple___Cedar_apple_rust": "苹果雪松赤星病",
+    "Apple___Cedar_apple_rust": "苹果锈病",
     "Apple___healthy": "苹果健康叶片",
     "Grape___Black_rot": "葡萄黑腐病",
-    "Grape___Esca_(Black_Measles)": "葡萄褐斑病 (黑豆病)",
+    "Grape___Esca_(Black_Measles)": "葡萄黑痘病",
     "Grape___healthy": "葡萄健康叶片",
     "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)": "葡萄叶枯病"
 }
@@ -83,7 +82,7 @@ async def start_detection(
     try:
         # 1. 保存原始图片
         unique_filename = f"{uuid.uuid4()}_{image.filename}"
-        img_save_path = os.path.join(UPLOAD_DIR, unique_filename)
+        img_save_path = UPLOAD_DIR / unique_filename
         with open(img_save_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
         
@@ -92,7 +91,7 @@ async def start_detection(
         start_time = time.perf_counter()
         
         yolo_model = get_model()
-        results = yolo_model.predict(img_save_path, conf=0.25)
+        results = yolo_model.predict(str(img_save_path), conf=0.25)
         
         latency_ms = (time.perf_counter() - start_time) * 1000
         
@@ -106,11 +105,11 @@ async def start_detection(
             
             # 保存标注结果图 (采用 plots 渲染 + cv2 保存，兼容性最强)
             res_img_filename = f"res_{unique_filename}"
-            res_img_path = os.path.join(UPLOAD_DIR, res_img_filename)
+            res_img_path = UPLOAD_DIR / res_img_filename
             
             # 渲染标注框并转换为 BGR 格式保存
             annotated_frame = results[0].plot() # 得到的是 RGB numpy array
-            cv2.imwrite(res_img_path, annotated_frame) 
+            cv2.imwrite(str(res_img_path), annotated_frame) 
             
             # 获取专家建议 (防错：如果数据库没准备好，不应卡死)
             try:

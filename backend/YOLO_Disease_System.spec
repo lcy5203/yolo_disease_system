@@ -3,7 +3,7 @@ from PyInstaller.utils.hooks import collect_all
 
 datas = [('app', 'app'), ('frontend_dist', 'frontend_dist'), ('models', 'models'), ('static', 'static')]
 binaries = []
-hiddenimports = ['ultralytics', 'cv2', 'PIL', 'passlib.handlers.bcrypt']
+hiddenimports = ['ultralytics', 'cv2', 'PIL', 'passlib.handlers.pbkdf2', 'passlib.handlers.bcrypt']
 tmp_ret = collect_all('ultralytics')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 
@@ -17,7 +17,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['onnx', 'onnx.reference', 'onnxruntime', 'onnxslim', 'torchaudio', 'PyQt5'],
     noarchive=False,
     optimize=0,
 )

@@ -4,7 +4,7 @@ import { ref, reactive } from 'vue'
 const props = defineProps(['data', 'isAdmin', 'token'])
 const emit = defineEmits(['fetch-ency'])
 
-const API_BASE = 'http://127.0.0.1:8000/api'
+const API_BASE = '/api'
 
 // --- 弹窗与状态控制 ---
 const showModal = ref(false)
@@ -47,6 +47,9 @@ const handleUpload = async (event) => {
       body: formData
     })
     const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data.detail || '图片上传失败')
+    }
     form.image_url = data.url
   } catch (e) {
     alert('图片上传失败')
