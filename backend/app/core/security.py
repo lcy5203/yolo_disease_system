@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import jwt
 import os
 
-SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key_change_in_prod")
+SECRET_KEY = os.getenv("SECRET_KEY", "yolo_disease_system_160132")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30 * 24 * 60 # Long lived for dev
 
